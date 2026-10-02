@@ -28,12 +28,20 @@ export default function Home() {
           </span>
           <span className="text-lg font-bold tracking-tight">JobTracker</span>
         </Link>
-        <Link
-          href="/register"
-          className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-blue-300 hover:text-blue-700"
-        >
-          회원가입
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="rounded-full px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-blue-700"
+          >
+            로그인
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-blue-300 hover:text-blue-700"
+          >
+            회원가입
+          </Link>
+        </div>
       </header>
 
       <section className="mx-auto grid w-full max-w-7xl gap-14 px-6 pt-16 pb-24 lg:grid-cols-[1.15fr_0.85fr] lg:px-10 lg:pt-24">

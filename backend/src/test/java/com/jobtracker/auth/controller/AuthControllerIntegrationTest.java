@@ -9,9 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +41,7 @@ class AuthControllerIntegrationTest {
 	@Test
 	void registersUser() throws Exception {
 		mockMvc.perform(post("/api/auth/register")
+						.with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{
@@ -61,6 +66,7 @@ class AuthControllerIntegrationTest {
 		userRepository.save(new User("user@example.com", passwordEncoder.encode("password123!"), "기존 사용자"));
 
 		mockMvc.perform(post("/api/auth/register")
+						.with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{
@@ -77,6 +83,7 @@ class AuthControllerIntegrationTest {
 	@Test
 	void rejectsInvalidRegistration() throws Exception {
 		mockMvc.perform(post("/api/auth/register")
+						.with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{
@@ -90,5 +97,53 @@ class AuthControllerIntegrationTest {
 				.andExpect(jsonPath("$.fieldErrors.email").exists())
 				.andExpect(jsonPath("$.fieldErrors.password").exists())
 				.andExpect(jsonPath("$.fieldErrors.displayName").exists());
+	}
+
+	@Test
+	void logsInAndReturnsAuthenticatedUser() throws Exception {
+		User user = userRepository.save(new User(
+				"user@example.com",
+				passwordEncoder.encode("password123!"),
+				"홍길동"
+		));
+
+		MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+						.with(csrf())
+						.param("email", "user@example.com")
+						.param("password", "password123!"))
+				.andExpect(status().isNoContent())
+				.andReturn();
+
+		MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+		assertThat(session).isNotNull();
+
+		mockMvc.perform(get("/api/auth/me").session(session))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(user.getId().toString()))
+				.andExpect(jsonPath("$.email").value("user@example.com"))
+				.andExpect(jsonPath("$.displayName").value("홍길동"));
+	}
+
+	@Test
+	void rejectsInvalidCredentials() throws Exception {
+		userRepository.save(new User(
+				"user@example.com",
+				passwordEncoder.encode("password123!"),
+				"홍길동"
+		));
+
+		mockMvc.perform(post("/api/auth/login")
+						.with(csrf())
+						.param("email", "user@example.com")
+						.param("password", "wrong-password"))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+	}
+
+	@Test
+	void requiresAuthenticationForCurrentUser() throws Exception {
+		mockMvc.perform(get("/api/auth/me"))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 	}
 }

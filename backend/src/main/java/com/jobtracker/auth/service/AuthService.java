@@ -1,5 +1,6 @@
 package com.jobtracker.auth.service;
 
+import com.jobtracker.auth.dto.AuthenticatedUserResponse;
 import com.jobtracker.auth.dto.RegisterRequest;
 import com.jobtracker.auth.dto.RegisterResponse;
 import com.jobtracker.common.exception.DuplicateResourceException;
@@ -7,6 +8,7 @@ import com.jobtracker.user.domain.User;
 import com.jobtracker.user.domain.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,5 +44,12 @@ public class AuthService {
 		} catch (DataIntegrityViolationException exception) {
 			throw new DuplicateResourceException("이미 가입된 이메일입니다.");
 		}
+	}
+
+	@Transactional(readOnly = true)
+	public AuthenticatedUserResponse getAuthenticatedUser(String email) {
+		return userRepository.findByEmail(email)
+				.map(AuthenticatedUserResponse::from)
+				.orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 	}
 }

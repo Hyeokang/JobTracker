@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
+import { csrfFetch } from "@/lib/api";
 
 const registerSchema = z
   .object({
@@ -24,8 +25,6 @@ type ApiError = {
   message?: string;
   fieldErrors?: Record<string, string>;
 };
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export function RegisterForm() {
   const [serverMessage, setServerMessage] = useState<string | null>(null);
@@ -49,7 +48,7 @@ export function RegisterForm() {
     setServerMessage(null);
 
     try {
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
+      const response = await csrfFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,10 +94,10 @@ export function RegisterForm() {
           생성되었습니다.
         </p>
         <Link
-          href="/"
+          href="/login"
           className="mt-7 inline-flex rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
         >
-          홈으로 돌아가기
+          로그인하기
         </Link>
       </div>
     );

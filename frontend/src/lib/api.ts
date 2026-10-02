@@ -1,0 +1,26 @@
+export const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080";
+
+type CsrfToken = {
+  headerName: string;
+  token: string;
+};
+
+export async function csrfFetch(path: string, init: RequestInit = {}) {
+  const csrfResponse = await fetch(`${apiUrl}/api/auth/csrf`, {
+    credentials: "include",
+  });
+
+  if (!csrfResponse.ok) {
+    throw new Error("CSRF token request failed");
+  }
+
+  const csrfToken = (await csrfResponse.json()) as CsrfToken;
+  const headers = new Headers(init.headers);
+  headers.set(csrfToken.headerName, csrfToken.token);
+
+  return fetch(`${apiUrl}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+}
