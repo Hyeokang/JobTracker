@@ -19,6 +19,13 @@ public class GlobalExceptionHandler {
 				.body(ErrorResponse.of(status.value(), "DUPLICATE_RESOURCE", exception.getMessage()));
 	}
 
+	@ExceptionHandler(InvalidRequestException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidRequest(InvalidRequestException exception) {
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+		return ResponseEntity.status(status)
+				.body(ErrorResponse.of(status.value(), "INVALID_REQUEST", exception.getMessage()));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
 		Map<String, String> fieldErrors = new LinkedHashMap<>();
