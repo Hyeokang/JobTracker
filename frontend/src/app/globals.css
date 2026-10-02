@@ -16,3 +16,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+button,
+a,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #bfdbfe;
+  color: #172554;
+}
