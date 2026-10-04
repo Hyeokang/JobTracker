@@ -15,6 +15,11 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type ApiError = { message?: string };
 
+const testAccount = {
+  email: process.env.NEXT_PUBLIC_TEST_ACCOUNT_EMAIL ?? "",
+  password: process.env.NEXT_PUBLIC_TEST_ACCOUNT_PASSWORD ?? "",
+};
+
 export function LoginForm() {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string | null>(null);
@@ -24,7 +29,7 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: testAccount,
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -55,6 +60,13 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      {testAccount.email && testAccount.password && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+          <p className="font-semibold">로컬 테스트 계정</p>
+          <p className="mt-1 break-all">아이디: {testAccount.email}</p>
+          <p className="break-all">비밀번호: {testAccount.password}</p>
+        </div>
+      )}
       <div>
         <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-800">이메일</label>
         <input
