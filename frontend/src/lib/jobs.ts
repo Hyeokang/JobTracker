@@ -11,6 +11,15 @@ export const employmentTypeLabels = {
 
 export type EmploymentType = keyof typeof employmentTypeLabels;
 
+export const recruitmentTypeLabels = {
+  ALWAYS_OPEN: "상시채용",
+  ROLLING: "수시채용",
+  OPEN_RECRUITMENT: "공개채용",
+  OTHER: "기타",
+} as const;
+
+export type RecruitmentType = keyof typeof recruitmentTypeLabels;
+
 export type JobPosting = {
   id: string;
   companyId: string;
@@ -19,6 +28,7 @@ export type JobPosting = {
   position: string | null;
   careerRequirement: string | null;
   employmentType: EmploymentType | null;
+  recruitmentType: RecruitmentType | null;
   location: string | null;
   startedDate: string | null;
   deadline: string | null;

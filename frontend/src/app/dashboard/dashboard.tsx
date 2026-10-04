@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { PageLoadError, PageLoading } from "@/components/auth-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { employmentTypeLabels, fetchJobs, type JobPosting } from "@/lib/jobs";
+import { employmentTypeLabels, fetchJobs, recruitmentTypeLabels, type JobPosting } from "@/lib/jobs";
 
 export function Dashboard() {
   const { user, isLoading: isUserLoading, hasError: hasUserError } = useCurrentUser();
@@ -90,7 +90,7 @@ export function Dashboard() {
                       <p className="text-sm font-semibold text-blue-600">{job.companyName}</p>
                       <h3 className="mt-1 text-lg font-bold">{job.title}</h3>
                       <p className="mt-1 text-sm text-slate-500">
-                        {[job.position, job.employmentType ? employmentTypeLabels[job.employmentType] : null, job.location].filter(Boolean).join(" · ") || "상세 조건 미입력"}
+                        {[job.position, job.employmentType ? employmentTypeLabels[job.employmentType] : null, job.recruitmentType ? recruitmentTypeLabels[job.recruitmentType] : null, job.location].filter(Boolean).join(" · ") || "상세 조건 미입력"}
                       </p>
                       {job.skills.length > 0 && (
                         <p className="mt-2 text-xs font-semibold text-blue-600">{job.skills.slice(0, 4).map((skill) => skill.name).join(" · ")}</p>

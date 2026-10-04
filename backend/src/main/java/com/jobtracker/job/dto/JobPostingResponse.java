@@ -2,6 +2,7 @@ package com.jobtracker.job.dto;
 
 import com.jobtracker.job.domain.EmploymentType;
 import com.jobtracker.job.domain.JobPosting;
+import com.jobtracker.job.domain.RecruitmentType;
 import com.jobtracker.skill.dto.SkillResponse;
 
 import java.time.Instant;
@@ -18,6 +19,7 @@ public record JobPostingResponse(
 		String position,
 		String careerRequirement,
 		EmploymentType employmentType,
+		RecruitmentType recruitmentType,
 		String location,
 		LocalDate startedDate,
 		LocalDate deadline,
@@ -36,6 +38,7 @@ public record JobPostingResponse(
 				jobPosting.getPosition(),
 				jobPosting.getCareerRequirement(),
 				jobPosting.getEmploymentType(),
+				jobPosting.getRecruitmentType(),
 				jobPosting.getLocation(),
 				jobPosting.getStartedDate(),
 				jobPosting.getDeadline(),

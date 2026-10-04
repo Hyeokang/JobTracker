@@ -1,6 +1,7 @@
 package com.jobtracker.job.dto;
 
 import com.jobtracker.job.domain.EmploymentType;
+import com.jobtracker.job.domain.RecruitmentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -25,6 +26,8 @@ public record CreateJobPostingRequest(
 		String careerRequirement,
 
 		EmploymentType employmentType,
+
+		RecruitmentType recruitmentType,
 
 		@Size(max = 100, message = "근무 지역은 100자 이하여야 합니다.")
 		String location,

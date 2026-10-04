@@ -69,6 +69,7 @@ class JobPostingControllerIntegrationTest {
 								  "position": "Backend Engineer",
 								  "careerRequirement": "신입 또는 경력 3년 이하",
 								  "employmentType": "FULL_TIME",
+								  "recruitmentType": "ROLLING",
 								  "location": "서울",
 								  "startedDate": "2026-10-01",
 								  "deadline": "2026-10-31",
@@ -86,6 +87,7 @@ class JobPostingControllerIntegrationTest {
 				.andExpect(jsonPath("$.companyName").value("JobTracker Labs"))
 				.andExpect(jsonPath("$.title").value("백엔드 개발자"))
 				.andExpect(jsonPath("$.employmentType").value("FULL_TIME"))
+				.andExpect(jsonPath("$.recruitmentType").value("ROLLING"))
 				.andExpect(jsonPath("$.skills.length()").value(2))
 				.andExpect(jsonPath("$.skills[0].name").value("Java"))
 				.andExpect(jsonPath("$.skills[1].name").value("Spring Boot"));
@@ -172,6 +174,7 @@ class JobPostingControllerIntegrationTest {
 								  "companyName": "Updated Company",
 								  "title": "수정된 공고",
 								  "employmentType": "CONTRACT",
+								  "recruitmentType": "ALWAYS_OPEN",
 								  "originalUrl": "https://example.com/jobs/updated",
 								  "skillIds": ["10000000-0000-0000-0000-000000000018"]
 								}
@@ -180,6 +183,7 @@ class JobPostingControllerIntegrationTest {
 				.andExpect(jsonPath("$.companyName").value("Updated Company"))
 				.andExpect(jsonPath("$.title").value("수정된 공고"))
 				.andExpect(jsonPath("$.employmentType").value("CONTRACT"))
+				.andExpect(jsonPath("$.recruitmentType").value("ALWAYS_OPEN"))
 				.andExpect(jsonPath("$.skills[0].name").value("Docker"));
 
 		mockMvc.perform(put("/api/jobs/{jobPostingId}", jobPostingId)

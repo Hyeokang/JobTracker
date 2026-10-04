@@ -7,7 +7,7 @@ import { AppHeader } from "@/components/app-header";
 import { PageLoadError, PageLoading } from "@/components/auth-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useJob } from "@/hooks/use-job";
-import { deleteJob, employmentTypeLabels } from "@/lib/jobs";
+import { deleteJob, employmentTypeLabels, recruitmentTypeLabels } from "@/lib/jobs";
 
 export function JobDetail({ jobPostingId }: { jobPostingId: string }) {
   const router = useRouter();
@@ -57,6 +57,7 @@ export function JobDetail({ jobPostingId }: { jobPostingId: string }) {
   const attributes = [
     job.position,
     job.employmentType ? employmentTypeLabels[job.employmentType] : null,
+    job.recruitmentType ? recruitmentTypeLabels[job.recruitmentType] : null,
     job.careerRequirement,
     job.location,
   ].filter(Boolean);

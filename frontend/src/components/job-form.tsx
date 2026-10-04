@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   createJob,
   employmentTypeLabels,
+  recruitmentTypeLabels,
   updateJob,
   type JobPosting,
 } from "@/lib/jobs";
@@ -26,6 +27,7 @@ const jobSchema = z
     position: z.string().trim().max(100),
     careerRequirement: z.string().trim().max(100),
     employmentType: z.enum(["", "FULL_TIME", "CONTRACT", "INTERN", "FREELANCE", "OTHER"]),
+    recruitmentType: z.enum(["", "ALWAYS_OPEN", "ROLLING", "OPEN_RECRUITMENT", "OTHER"]),
     location: z.string().trim().max(100),
     startedDate: z.string(),
     deadline: z.string(),
@@ -48,6 +50,7 @@ const emptyValues: JobFormValues = {
   position: "",
   careerRequirement: "",
   employmentType: "",
+  recruitmentType: "",
   location: "",
   startedDate: "",
   deadline: "",
@@ -64,6 +67,7 @@ function valuesFromJob(job: JobPosting): JobFormValues {
     position: job.position ?? "",
     careerRequirement: job.careerRequirement ?? "",
     employmentType: job.employmentType ?? "",
+    recruitmentType: job.recruitmentType ?? "",
     location: job.location ?? "",
     startedDate: job.startedDate ?? "",
     deadline: job.deadline ?? "",
@@ -156,6 +160,13 @@ export function JobForm({ job }: { job?: JobPosting }) {
             <select id="employmentType" className={inputClassName} {...register("employmentType")}>
               <option value="">선택하지 않음</option>
               {Object.entries(employmentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="recruitmentType" className="mb-2 block text-sm font-semibold text-slate-800">채용 방식</label>
+            <select id="recruitmentType" className={inputClassName} {...register("recruitmentType")}>
+              <option value="">선택하지 않음</option>
+              {Object.entries(recruitmentTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </div>
           <Field id="location" label="근무 지역" placeholder="예: 서울 강남구" error={errors.location?.message} registration={register("location")} />

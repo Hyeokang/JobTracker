@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { PageLoadError, PageLoading } from "@/components/auth-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { employmentTypeLabels, fetchJobs, type JobPosting } from "@/lib/jobs";
+import { employmentTypeLabels, fetchJobs, recruitmentTypeLabels, type JobPosting } from "@/lib/jobs";
 
 export function JobList() {
   const { user, isLoading: isUserLoading, hasError: hasUserError } = useCurrentUser();
@@ -69,6 +69,7 @@ export function JobList() {
                     <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-600">
                       {job.position && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.position}</span>}
                       {job.employmentType && <span className="rounded-full bg-slate-100 px-3 py-1.5">{employmentTypeLabels[job.employmentType]}</span>}
+                      {job.recruitmentType && <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700">{recruitmentTypeLabels[job.recruitmentType]}</span>}
                       {job.careerRequirement && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.careerRequirement}</span>}
                       {job.location && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.location}</span>}
                     </div>

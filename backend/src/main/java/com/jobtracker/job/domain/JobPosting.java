@@ -53,6 +53,10 @@ public class JobPosting {
 	@Column(name = "employment_type", length = 30)
 	private EmploymentType employmentType;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "recruitment_type", length = 30)
+	private RecruitmentType recruitmentType;
+
 	@Column(length = 100)
 	private String location;
 
@@ -89,6 +93,7 @@ public class JobPosting {
 			String position,
 			String careerRequirement,
 			EmploymentType employmentType,
+			RecruitmentType recruitmentType,
 			String location,
 			LocalDate startedDate,
 			LocalDate deadline,
@@ -103,6 +108,7 @@ public class JobPosting {
 		this.position = position;
 		this.careerRequirement = careerRequirement;
 		this.employmentType = employmentType;
+		this.recruitmentType = recruitmentType;
 		this.location = location;
 		this.startedDate = startedDate;
 		this.deadline = deadline;
@@ -117,6 +123,7 @@ public class JobPosting {
 			String position,
 			String careerRequirement,
 			EmploymentType employmentType,
+			RecruitmentType recruitmentType,
 			String location,
 			LocalDate startedDate,
 			LocalDate deadline,
@@ -129,6 +136,7 @@ public class JobPosting {
 		this.position = position;
 		this.careerRequirement = careerRequirement;
 		this.employmentType = employmentType;
+		this.recruitmentType = recruitmentType;
 		this.location = location;
 		this.startedDate = startedDate;
 		this.deadline = deadline;
@@ -186,6 +194,10 @@ public class JobPosting {
 
 	public EmploymentType getEmploymentType() {
 		return employmentType;
+	}
+
+	public RecruitmentType getRecruitmentType() {
+		return recruitmentType;
 	}
 
 	public String getLocation() {
