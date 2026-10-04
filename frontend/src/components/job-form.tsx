@@ -20,6 +20,11 @@ import {
   type SkillCategory,
 } from "@/lib/skills";
 
+const identifierSchema = z.string().regex(
+  /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i,
+  "올바르지 않은 기술이 포함되어 있습니다.",
+);
+
 const jobSchema = z
   .object({
     companyName: z.string().trim().min(1, "회사명을 입력해 주세요.").max(100),
@@ -34,7 +39,7 @@ const jobSchema = z
     originalUrl: z.union([z.literal(""), z.string().url("올바른 URL을 입력해 주세요.")]),
     requirements: z.string().trim().max(5000),
     preferredQualifications: z.string().trim().max(5000),
-    skillIds: z.array(z.string().uuid()),
+    skillIds: z.array(identifierSchema),
   })
   .refine(
     (values) => !values.startedDate || !values.deadline || values.deadline >= values.startedDate,
@@ -199,6 +204,7 @@ export function JobForm({ job }: { job?: JobPosting }) {
             ))}
           </div>
         )}
+        {errors.skillIds && <p role="alert" className="mt-3 text-sm text-red-600">기술 선택을 다시 확인해 주세요.</p>}
       </section>
 
       <section className="border-t border-slate-100 pt-8">
