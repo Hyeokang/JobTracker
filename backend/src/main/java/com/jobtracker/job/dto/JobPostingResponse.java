@@ -2,9 +2,12 @@ package com.jobtracker.job.dto;
 
 import com.jobtracker.job.domain.EmploymentType;
 import com.jobtracker.job.domain.JobPosting;
+import com.jobtracker.skill.dto.SkillResponse;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 
 public record JobPostingResponse(
@@ -21,6 +24,7 @@ public record JobPostingResponse(
 		String requirements,
 		String preferredQualifications,
 		String originalUrl,
+		List<SkillResponse> skills,
 		Instant createdAt
 ) {
 	public static JobPostingResponse from(JobPosting jobPosting) {
@@ -38,6 +42,10 @@ public record JobPostingResponse(
 				jobPosting.getRequirements(),
 				jobPosting.getPreferredQualifications(),
 				jobPosting.getOriginalUrl(),
+				jobPosting.getJobSkills().stream()
+						.map(jobSkill -> SkillResponse.from(jobSkill.getSkill()))
+						.sorted(Comparator.comparing(SkillResponse::category).thenComparing(SkillResponse::name))
+						.toList(),
 				jobPosting.getCreatedAt()
 		);
 	}

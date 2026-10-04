@@ -1,4 +1,5 @@
 import { apiUrl, csrfFetch } from "@/lib/api";
+import type { Skill } from "@/lib/skills";
 
 export const employmentTypeLabels = {
   FULL_TIME: "정규직",
@@ -24,10 +25,11 @@ export type JobPosting = {
   requirements: string | null;
   preferredQualifications: string | null;
   originalUrl: string | null;
+  skills: Skill[];
   createdAt: string;
 };
 
-export type JobPayload = Record<string, string | null>;
+export type JobPayload = Record<string, string | string[] | null>;
 
 export async function fetchJobs(signal?: AbortSignal) {
   return fetch(`${apiUrl}/api/jobs`, {

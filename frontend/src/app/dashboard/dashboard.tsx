@@ -92,6 +92,9 @@ export function Dashboard() {
                       <p className="mt-1 text-sm text-slate-500">
                         {[job.position, job.employmentType ? employmentTypeLabels[job.employmentType] : null, job.location].filter(Boolean).join(" · ") || "상세 조건 미입력"}
                       </p>
+                      {job.skills.length > 0 && (
+                        <p className="mt-2 text-xs font-semibold text-blue-600">{job.skills.slice(0, 4).map((skill) => skill.name).join(" · ")}</p>
+                      )}
                     </div>
                     <p className="text-sm text-slate-500">{job.deadline ? `${job.deadline} 마감` : "상시 채용"}</p>
                   </article>

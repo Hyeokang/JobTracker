@@ -72,6 +72,13 @@ export function JobList() {
                       {job.careerRequirement && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.careerRequirement}</span>}
                       {job.location && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.location}</span>}
                     </div>
+                    {job.skills.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {job.skills.map((skill) => (
+                          <span key={skill.id} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{skill.name}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="shrink-0 text-sm text-slate-500 sm:text-right">
                     <p>{job.deadline ? `${job.deadline} 마감` : "마감일 미정"}</p>

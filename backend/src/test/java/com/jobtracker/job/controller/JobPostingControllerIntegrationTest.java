@@ -74,19 +74,27 @@ class JobPostingControllerIntegrationTest {
 								  "deadline": "2026-10-31",
 								  "requirements": "Java와 Spring 경험",
 								  "preferredQualifications": "Docker 경험",
-								  "originalUrl": "https://example.com/jobs/1"
+								  "originalUrl": "https://example.com/jobs/1",
+								  "skillIds": [
+								    "10000000-0000-0000-0000-000000000001",
+								    "10000000-0000-0000-0000-000000000004"
+								  ]
 								}
 								"""))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.id").isNotEmpty())
 				.andExpect(jsonPath("$.companyName").value("JobTracker Labs"))
 				.andExpect(jsonPath("$.title").value("백엔드 개발자"))
-				.andExpect(jsonPath("$.employmentType").value("FULL_TIME"));
+				.andExpect(jsonPath("$.employmentType").value("FULL_TIME"))
+				.andExpect(jsonPath("$.skills.length()").value(2))
+				.andExpect(jsonPath("$.skills[0].name").value("Java"))
+				.andExpect(jsonPath("$.skills[1].name").value("Spring Boot"));
 
 		mockMvc.perform(get("/api/jobs").with(user("user@example.com")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.length()").value(1))
-				.andExpect(jsonPath("$[0].originalUrl").value("https://example.com/jobs/1"));
+				.andExpect(jsonPath("$[0].originalUrl").value("https://example.com/jobs/1"))
+				.andExpect(jsonPath("$[0].skills.length()").value(2));
 	}
 
 	@Test
@@ -164,13 +172,30 @@ class JobPostingControllerIntegrationTest {
 								  "companyName": "Updated Company",
 								  "title": "수정된 공고",
 								  "employmentType": "CONTRACT",
-								  "originalUrl": "https://example.com/jobs/updated"
+								  "originalUrl": "https://example.com/jobs/updated",
+								  "skillIds": ["10000000-0000-0000-0000-000000000018"]
 								}
 								"""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.companyName").value("Updated Company"))
 				.andExpect(jsonPath("$.title").value("수정된 공고"))
-				.andExpect(jsonPath("$.employmentType").value("CONTRACT"));
+				.andExpect(jsonPath("$.employmentType").value("CONTRACT"))
+				.andExpect(jsonPath("$.skills[0].name").value("Docker"));
+
+		mockMvc.perform(put("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com"))
+						.with(csrf())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "companyName": "Updated Company",
+								  "title": "기술 교체 확인",
+								  "skillIds": ["10000000-0000-0000-0000-000000000001"]
+								}
+								"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.skills.length()").value(1))
+				.andExpect(jsonPath("$.skills[0].name").value("Java"));
 	}
 
 	@Test
@@ -233,6 +258,23 @@ class JobPostingControllerIntegrationTest {
 								"""))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"));
+	}
+
+	@Test
+	void rejectsUnknownSkill() throws Exception {
+		mockMvc.perform(post("/api/jobs")
+						.with(user("user@example.com"))
+						.with(csrf())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "companyName": "Example",
+								  "title": "잘못된 기술",
+								  "skillIds": ["99999999-9999-9999-9999-999999999999"]
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 	}
 
 	private UUID createJob(String email, String title, String url) throws Exception {

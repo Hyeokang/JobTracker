@@ -9,6 +9,8 @@ import com.jobtracker.job.domain.JobPosting;
 import com.jobtracker.job.domain.JobPostingRepository;
 import com.jobtracker.job.dto.CreateJobPostingRequest;
 import com.jobtracker.job.dto.JobPostingResponse;
+import com.jobtracker.skill.domain.Skill;
+import com.jobtracker.skill.domain.SkillRepository;
 import com.jobtracker.user.domain.User;
 import com.jobtracker.user.domain.UserRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -25,15 +28,18 @@ public class JobPostingService {
 	private final JobPostingRepository jobPostingRepository;
 	private final CompanyRepository companyRepository;
 	private final UserRepository userRepository;
+	private final SkillRepository skillRepository;
 
 	public JobPostingService(
 			JobPostingRepository jobPostingRepository,
 			CompanyRepository companyRepository,
-			UserRepository userRepository
+			UserRepository userRepository,
+			SkillRepository skillRepository
 	) {
 		this.jobPostingRepository = jobPostingRepository;
 		this.companyRepository = companyRepository;
 		this.userRepository = userRepository;
+		this.skillRepository = skillRepository;
 	}
 
 	@Transactional
@@ -61,6 +67,7 @@ public class JobPostingService {
 				clean(request.preferredQualifications()),
 				originalUrl
 		);
+		jobPosting.replaceSkills(resolveSkills(request.skillIds()));
 
 		return JobPostingResponse.from(jobPostingRepository.save(jobPosting));
 	}
@@ -105,6 +112,7 @@ public class JobPostingService {
 				clean(request.preferredQualifications()),
 				originalUrl
 		);
+		jobPosting.replaceSkills(resolveSkills(request.skillIds()));
 
 		return JobPostingResponse.from(jobPosting);
 	}
@@ -137,6 +145,18 @@ public class JobPostingService {
 				&& request.deadline().isBefore(request.startedDate())) {
 			throw new InvalidRequestException("마감일은 모집 시작일보다 빠를 수 없습니다.");
 		}
+	}
+
+	private List<Skill> resolveSkills(Set<UUID> skillIds) {
+		if (skillIds == null || skillIds.isEmpty()) {
+			return List.of();
+		}
+
+		List<Skill> skills = skillRepository.findAllById(skillIds);
+		if (skills.size() != skillIds.size()) {
+			throw new InvalidRequestException("존재하지 않는 기술이 포함되어 있습니다.");
+		}
+		return skills;
 	}
 
 	private String normalizeSpaces(String value) {

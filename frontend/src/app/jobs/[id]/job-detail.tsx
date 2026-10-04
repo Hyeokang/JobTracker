@@ -95,6 +95,18 @@ export function JobDetail({ jobPostingId }: { jobPostingId: string }) {
           </div>
 
           <div className="mt-8 grid gap-8">
+            <section>
+              <h2 className="text-lg font-bold">기술스택</h2>
+              {job.skills.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {job.skills.map((skill) => (
+                    <span key={skill.id} className="rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700">{skill.name}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-slate-600">등록된 기술이 없습니다.</p>
+              )}
+            </section>
             <DetailSection title="자격요건" content={job.requirements} />
             <DetailSection title="우대사항" content={job.preferredQualifications} />
           </div>

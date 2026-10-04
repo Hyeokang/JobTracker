@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -12,6 +12,12 @@ import {
   updateJob,
   type JobPosting,
 } from "@/lib/jobs";
+import {
+  fetchSkills,
+  skillCategoryLabels,
+  type Skill,
+  type SkillCategory,
+} from "@/lib/skills";
 
 const jobSchema = z
   .object({
@@ -26,6 +32,7 @@ const jobSchema = z
     originalUrl: z.union([z.literal(""), z.string().url("올바른 URL을 입력해 주세요.")]),
     requirements: z.string().trim().max(5000),
     preferredQualifications: z.string().trim().max(5000),
+    skillIds: z.array(z.string().uuid()),
   })
   .refine(
     (values) => !values.startedDate || !values.deadline || values.deadline >= values.startedDate,
@@ -47,6 +54,7 @@ const emptyValues: JobFormValues = {
   originalUrl: "",
   requirements: "",
   preferredQualifications: "",
+  skillIds: [],
 };
 
 function valuesFromJob(job: JobPosting): JobFormValues {
@@ -62,12 +70,16 @@ function valuesFromJob(job: JobPosting): JobFormValues {
     originalUrl: job.originalUrl ?? "",
     requirements: job.requirements ?? "",
     preferredQualifications: job.preferredQualifications ?? "",
+    skillIds: job.skills.map((skill) => skill.id),
   };
 }
 
 export function JobForm({ job }: { job?: JobPosting }) {
   const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [areSkillsLoading, setAreSkillsLoading] = useState(true);
+  const [hasSkillsError, setHasSkillsError] = useState(false);
   const defaultValues = job ? valuesFromJob(job) : emptyValues;
   const {
     register,
@@ -75,6 +87,30 @@ export function JobForm({ job }: { job?: JobPosting }) {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<JobFormValues>({ resolver: zodResolver(jobSchema), defaultValues });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchSkills(controller.signal)
+      .then(async (response) => {
+        if (response.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        if (!response.ok) throw new Error("Failed to load skills");
+        setSkills((await response.json()) as Skill[]);
+      })
+      .catch((error) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setHasSkillsError(true);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAreSkillsLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [router]);
 
   const cancelHref = job ? `/jobs/${job.id}` : "/jobs";
   const onSubmit = handleSubmit(async (values) => {
@@ -127,6 +163,34 @@ export function JobForm({ job }: { job?: JobPosting }) {
       </section>
 
       <section className="border-t border-slate-100 pt-8">
+        <h2 className="text-lg font-bold">기술스택</h2>
+        <p className="mt-2 text-sm text-slate-500">공고에서 요구하는 기술을 모두 선택하세요.</p>
+        {areSkillsLoading ? (
+          <p className="mt-5 text-sm text-slate-500">기술 목록을 불러오는 중...</p>
+        ) : hasSkillsError ? (
+          <p role="alert" className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">기술 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</p>
+        ) : (
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            {(Object.keys(skillCategoryLabels) as SkillCategory[]).map((category) => (
+              <fieldset key={category} className="rounded-2xl border border-slate-200 p-4">
+                <legend className="px-1 text-sm font-bold text-slate-800">{skillCategoryLabels[category]}</legend>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {skills.filter((skill) => skill.category === category).map((skill) => (
+                    <label key={skill.id} className="cursor-pointer">
+                      <input type="checkbox" value={skill.id} className="peer sr-only" {...register("skillIds")} />
+                      <span className="inline-flex rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition peer-checked:border-blue-600 peer-checked:bg-blue-600 peer-checked:text-white peer-focus-visible:ring-4 peer-focus-visible:ring-blue-100">
+                        {skill.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="border-t border-slate-100 pt-8">
         <h2 className="text-lg font-bold">일정과 원문</h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
           <Field id="startedDate" label="모집 시작일" type="date" error={errors.startedDate?.message} registration={register("startedDate")} />
@@ -149,7 +213,7 @@ export function JobForm({ job }: { job?: JobPosting }) {
 
       <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-7 sm:flex-row sm:justify-end">
         <Link href={cancelHref} className="inline-flex justify-center rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700">취소</Link>
-        <button type="submit" disabled={isSubmitting} className="inline-flex justify-center rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/15 transition hover:bg-blue-700 disabled:opacity-60">
+        <button type="submit" disabled={isSubmitting || areSkillsLoading || hasSkillsError} className="inline-flex justify-center rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-lg shadow-blue-600/15 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
           {isSubmitting ? "저장하고 있습니다..." : job ? "수정 내용 저장" : "채용공고 저장"}
         </button>
       </div>

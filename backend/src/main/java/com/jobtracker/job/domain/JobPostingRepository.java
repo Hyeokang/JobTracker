@@ -9,10 +9,10 @@ import java.util.UUID;
 
 public interface JobPostingRepository extends JpaRepository<JobPosting, UUID> {
 
-	@EntityGraph(attributePaths = "company")
+	@EntityGraph(attributePaths = {"company", "jobSkills.skill"})
 	List<JobPosting> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
 
-	@EntityGraph(attributePaths = "company")
+	@EntityGraph(attributePaths = {"company", "jobSkills.skill"})
 	Optional<JobPosting> findByIdAndUserId(UUID id, UUID userId);
 
 	boolean existsByUserIdAndOriginalUrl(UUID userId, String originalUrl);

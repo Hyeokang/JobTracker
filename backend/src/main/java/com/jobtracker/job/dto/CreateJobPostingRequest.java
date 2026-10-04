@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.Set;
+import java.util.UUID;
 
 public record CreateJobPostingRequest(
 		@NotBlank(message = "회사명을 입력해 주세요.")
@@ -39,6 +41,9 @@ public record CreateJobPostingRequest(
 
 		@Size(max = 2048, message = "URL은 2048자 이하여야 합니다.")
 		@Pattern(regexp = "^$|https?://.+", message = "URL은 http 또는 https로 시작해야 합니다.")
-		String originalUrl
+		String originalUrl,
+
+		@Size(max = 100, message = "기술은 100개 이하로 선택해 주세요.")
+		Set<UUID> skillIds
 ) {
 }

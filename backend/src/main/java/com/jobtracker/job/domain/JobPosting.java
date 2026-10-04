@@ -1,7 +1,9 @@
 package com.jobtracker.job.domain;
 
 import com.jobtracker.company.domain.Company;
+import com.jobtracker.skill.domain.Skill;
 import com.jobtracker.user.domain.User;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,13 +12,18 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "job_postings")
@@ -68,6 +75,9 @@ public class JobPosting {
 
 	@Column(name = "updated_at", nullable = false)
 	private Instant updatedAt;
+
+	@OneToMany(mappedBy = "jobPosting", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<JobSkill> jobSkills = new LinkedHashSet<>();
 
 	protected JobPosting() {
 	}
@@ -125,6 +135,21 @@ public class JobPosting {
 		this.requirements = requirements;
 		this.preferredQualifications = preferredQualifications;
 		this.originalUrl = originalUrl;
+	}
+
+	public void replaceSkills(Collection<Skill> skills) {
+		Set<UUID> requestedSkillIds = skills.stream()
+				.map(Skill::getId)
+				.collect(Collectors.toSet());
+		this.jobSkills.removeIf(jobSkill -> !requestedSkillIds.contains(jobSkill.getSkill().getId()));
+
+		Set<UUID> existingSkillIds = this.jobSkills.stream()
+				.map(jobSkill -> jobSkill.getSkill().getId())
+				.collect(Collectors.toSet());
+		skills.stream()
+				.filter(skill -> !existingSkillIds.contains(skill.getId()))
+				.map(skill -> new JobSkill(this, skill))
+				.forEach(this.jobSkills::add);
 	}
 
 	@PrePersist
@@ -189,5 +214,9 @@ public class JobPosting {
 
 	public Instant getCreatedAt() {
 		return createdAt;
+	}
+
+	public Set<JobSkill> getJobSkills() {
+		return Set.copyOf(jobSkills);
 	}
 }
