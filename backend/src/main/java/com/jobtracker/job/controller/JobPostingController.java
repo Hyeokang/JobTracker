@@ -6,14 +6,18 @@ import com.jobtracker.job.service.JobPostingService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -37,5 +41,31 @@ public class JobPostingController {
 	@GetMapping
 	public List<JobPostingResponse> findAll(Authentication authentication) {
 		return jobPostingService.findAll(authentication.getName());
+	}
+
+	@GetMapping("/{jobPostingId}")
+	public JobPostingResponse findById(
+			Authentication authentication,
+			@PathVariable UUID jobPostingId
+	) {
+		return jobPostingService.findById(authentication.getName(), jobPostingId);
+	}
+
+	@PutMapping("/{jobPostingId}")
+	public JobPostingResponse update(
+			Authentication authentication,
+			@PathVariable UUID jobPostingId,
+			@Valid @RequestBody CreateJobPostingRequest request
+	) {
+		return jobPostingService.update(authentication.getName(), jobPostingId, request);
+	}
+
+	@DeleteMapping("/{jobPostingId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(
+			Authentication authentication,
+			@PathVariable UUID jobPostingId
+	) {
+		jobPostingService.delete(authentication.getName(), jobPostingId);
 	}
 }

@@ -27,6 +27,8 @@ export type JobPosting = {
   createdAt: string;
 };
 
+export type JobPayload = Record<string, string | null>;
+
 export async function fetchJobs(signal?: AbortSignal) {
   return fetch(`${apiUrl}/api/jobs`, {
     credentials: "include",
@@ -34,10 +36,29 @@ export async function fetchJobs(signal?: AbortSignal) {
   });
 }
 
-export async function createJob(input: Record<string, string | null>) {
+export async function fetchJob(jobPostingId: string, signal?: AbortSignal) {
+  return fetch(`${apiUrl}/api/jobs/${jobPostingId}`, {
+    credentials: "include",
+    signal,
+  });
+}
+
+export async function createJob(input: JobPayload) {
   return csrfFetch("/api/jobs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
+}
+
+export async function updateJob(jobPostingId: string, input: JobPayload) {
+  return csrfFetch(`/api/jobs/${jobPostingId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteJob(jobPostingId: string) {
+  return csrfFetch(`/api/jobs/${jobPostingId}`, { method: "DELETE" });
 }

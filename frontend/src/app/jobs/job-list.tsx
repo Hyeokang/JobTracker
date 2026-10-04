@@ -63,7 +63,9 @@ export function JobList() {
                 <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
                   <div>
                     <p className="text-sm font-bold text-blue-600">{job.companyName}</p>
-                    <h2 className="mt-2 text-xl font-bold sm:text-2xl">{job.title}</h2>
+                    <h2 className="mt-2 text-xl font-bold sm:text-2xl">
+                      <Link href={`/jobs/${job.id}`} className="transition hover:text-blue-700">{job.title}</Link>
+                    </h2>
                     <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-600">
                       {job.position && <span className="rounded-full bg-slate-100 px-3 py-1.5">{job.position}</span>}
                       {job.employmentType && <span className="rounded-full bg-slate-100 px-3 py-1.5">{employmentTypeLabels[job.employmentType]}</span>}
@@ -73,8 +75,11 @@ export function JobList() {
                   </div>
                   <div className="shrink-0 text-sm text-slate-500 sm:text-right">
                     <p>{job.deadline ? `${job.deadline} 마감` : "마감일 미정"}</p>
+                    <Link href={`/jobs/${job.id}`} className="mt-3 inline-flex font-semibold text-slate-700 hover:text-blue-700">
+                      상세 보기
+                    </Link>
                     {job.originalUrl && (
-                      <a href={job.originalUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex font-semibold text-blue-600 hover:text-blue-700">
+                      <a href={job.originalUrl} target="_blank" rel="noreferrer" className="mt-3 ml-4 inline-flex font-semibold text-blue-600 hover:text-blue-700">
                         원문 보기 ↗
                       </a>
                     )}

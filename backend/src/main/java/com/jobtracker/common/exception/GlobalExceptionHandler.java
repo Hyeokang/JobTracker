@@ -26,6 +26,13 @@ public class GlobalExceptionHandler {
 				.body(ErrorResponse.of(status.value(), "INVALID_REQUEST", exception.getMessage()));
 	}
 
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
+		HttpStatus status = HttpStatus.NOT_FOUND;
+		return ResponseEntity.status(status)
+				.body(ErrorResponse.of(status.value(), "RESOURCE_NOT_FOUND", exception.getMessage()));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
 		Map<String, String> fieldErrors = new LinkedHashMap<>();

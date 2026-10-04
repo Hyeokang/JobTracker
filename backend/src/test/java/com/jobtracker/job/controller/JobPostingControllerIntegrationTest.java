@@ -14,10 +14,14 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -142,7 +146,96 @@ class JobPostingControllerIntegrationTest {
 				.andExpect(jsonPath("$.code").value("AUTHENTICATION_REQUIRED"));
 	}
 
-	private void createJob(String email, String title, String url) throws Exception {
+	@Test
+	void getsAndUpdatesOwnedJobPosting() throws Exception {
+		UUID jobPostingId = createJob("user@example.com", "수정 전 공고", "https://example.com/jobs/update");
+
+		mockMvc.perform(get("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("수정 전 공고"));
+
+		mockMvc.perform(put("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com"))
+						.with(csrf())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "companyName": "Updated Company",
+								  "title": "수정된 공고",
+								  "employmentType": "CONTRACT",
+								  "originalUrl": "https://example.com/jobs/updated"
+								}
+								"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.companyName").value("Updated Company"))
+				.andExpect(jsonPath("$.title").value("수정된 공고"))
+				.andExpect(jsonPath("$.employmentType").value("CONTRACT"));
+	}
+
+	@Test
+	void deletesOwnedJobPosting() throws Exception {
+		UUID jobPostingId = createJob("user@example.com", "삭제할 공고", "https://example.com/jobs/delete");
+
+		mockMvc.perform(delete("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com"))
+						.with(csrf()))
+				.andExpect(status().isNoContent());
+
+		mockMvc.perform(get("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com")))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
+	}
+
+	@Test
+	void hidesAnotherUsersJobPosting() throws Exception {
+		userRepository.save(new User("other@example.com", passwordEncoder.encode("password123!"), "다른 사용자"));
+		UUID jobPostingId = createJob("other@example.com", "다른 사용자의 공고", "https://example.com/jobs/private");
+
+		mockMvc.perform(get("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com")))
+				.andExpect(status().isNotFound());
+
+		mockMvc.perform(put("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com"))
+						.with(csrf())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "companyName": "탈취 시도",
+								  "title": "수정 시도"
+								}
+								"""))
+				.andExpect(status().isNotFound());
+
+		mockMvc.perform(delete("/api/jobs/{jobPostingId}", jobPostingId)
+						.with(user("user@example.com"))
+						.with(csrf()))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void rejectsDuplicateUrlWhenUpdating() throws Exception {
+		createJob("user@example.com", "첫 공고", "https://example.com/jobs/first");
+		UUID secondJobId = createJob("user@example.com", "두 번째 공고", "https://example.com/jobs/second");
+
+		mockMvc.perform(put("/api/jobs/{jobPostingId}", secondJobId)
+						.with(user("user@example.com"))
+						.with(csrf())
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "companyName": "Example",
+								  "title": "중복 URL 수정",
+								  "originalUrl": "https://example.com/jobs/first"
+								}
+								"""))
+				.andExpect(status().isConflict())
+				.andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"));
+	}
+
+	private UUID createJob(String email, String title, String url) throws Exception {
 		mockMvc.perform(post("/api/jobs")
 					.with(user(email))
 					.with(csrf())
@@ -155,5 +248,11 @@ class JobPostingControllerIntegrationTest {
 							}
 							""".formatted(title, url)))
 			.andExpect(status().isCreated());
+
+		return jobPostingRepository.findAll().stream()
+				.filter(jobPosting -> jobPosting.getTitle().equals(title))
+				.findFirst()
+				.orElseThrow()
+				.getId();
 	}
 }

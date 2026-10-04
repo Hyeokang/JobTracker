@@ -101,6 +101,32 @@ public class JobPosting {
 		this.originalUrl = originalUrl;
 	}
 
+	public void update(
+			Company company,
+			String title,
+			String position,
+			String careerRequirement,
+			EmploymentType employmentType,
+			String location,
+			LocalDate startedDate,
+			LocalDate deadline,
+			String requirements,
+			String preferredQualifications,
+			String originalUrl
+	) {
+		this.company = company;
+		this.title = title;
+		this.position = position;
+		this.careerRequirement = careerRequirement;
+		this.employmentType = employmentType;
+		this.location = location;
+		this.startedDate = startedDate;
+		this.deadline = deadline;
+		this.requirements = requirements;
+		this.preferredQualifications = preferredQualifications;
+		this.originalUrl = originalUrl;
+	}
+
 	@PrePersist
 	void onCreate() {
 		Instant now = Instant.now();

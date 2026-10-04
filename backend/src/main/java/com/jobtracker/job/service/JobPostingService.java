@@ -2,6 +2,7 @@ package com.jobtracker.job.service;
 
 import com.jobtracker.common.exception.DuplicateResourceException;
 import com.jobtracker.common.exception.InvalidRequestException;
+import com.jobtracker.common.exception.ResourceNotFoundException;
 import com.jobtracker.company.domain.Company;
 import com.jobtracker.company.domain.CompanyRepository;
 import com.jobtracker.job.domain.JobPosting;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 public class JobPostingService {
@@ -42,15 +44,8 @@ public class JobPostingService {
 		if (originalUrl != null && jobPostingRepository.existsByUserIdAndOriginalUrl(user.getId(), originalUrl)) {
 			throw new DuplicateResourceException("이미 저장한 채용공고 URL입니다.");
 		}
-		if (request.startedDate() != null && request.deadline() != null
-				&& request.deadline().isBefore(request.startedDate())) {
-			throw new InvalidRequestException("마감일은 모집 시작일보다 빠를 수 없습니다.");
-		}
-
-		String companyName = normalizeSpaces(request.companyName());
-		String normalizedCompanyName = companyName.toLowerCase(Locale.ROOT);
-		Company company = companyRepository.findByNormalizedName(normalizedCompanyName)
-				.orElseGet(() -> companyRepository.save(new Company(companyName, normalizedCompanyName)));
+		validateDates(request);
+		Company company = resolveCompany(request.companyName());
 
 		JobPosting jobPosting = new JobPosting(
 				user,
@@ -78,9 +73,70 @@ public class JobPostingService {
 				.toList();
 	}
 
+	@Transactional(readOnly = true)
+	public JobPostingResponse findById(String email, UUID jobPostingId) {
+		User user = findUser(email);
+		return JobPostingResponse.from(findOwnedJobPosting(jobPostingId, user));
+	}
+
+	@Transactional
+	public JobPostingResponse update(String email, UUID jobPostingId, CreateJobPostingRequest request) {
+		User user = findUser(email);
+		JobPosting jobPosting = findOwnedJobPosting(jobPostingId, user);
+		String originalUrl = clean(request.originalUrl());
+
+		if (originalUrl != null && jobPostingRepository.existsByUserIdAndOriginalUrlAndIdNot(
+				user.getId(), originalUrl, jobPostingId)) {
+			throw new DuplicateResourceException("이미 저장한 채용공고 URL입니다.");
+		}
+		validateDates(request);
+		Company company = resolveCompany(request.companyName());
+
+		jobPosting.update(
+				company,
+				normalizeSpaces(request.title()),
+				clean(request.position()),
+				clean(request.careerRequirement()),
+				request.employmentType(),
+				clean(request.location()),
+				request.startedDate(),
+				request.deadline(),
+				clean(request.requirements()),
+				clean(request.preferredQualifications()),
+				originalUrl
+		);
+
+		return JobPostingResponse.from(jobPosting);
+	}
+
+	@Transactional
+	public void delete(String email, UUID jobPostingId) {
+		User user = findUser(email);
+		jobPostingRepository.delete(findOwnedJobPosting(jobPostingId, user));
+	}
+
 	private User findUser(String email) {
 		return userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+	}
+
+	private JobPosting findOwnedJobPosting(UUID jobPostingId, User user) {
+		return jobPostingRepository.findByIdAndUserId(jobPostingId, user.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("채용공고를 찾을 수 없습니다."));
+	}
+
+	private Company resolveCompany(String requestedCompanyName) {
+		String companyName = normalizeSpaces(requestedCompanyName);
+		String normalizedCompanyName = companyName.toLowerCase(Locale.ROOT);
+		return companyRepository.findByNormalizedName(normalizedCompanyName)
+				.orElseGet(() -> companyRepository.save(new Company(companyName, normalizedCompanyName)));
+	}
+
+	private void validateDates(CreateJobPostingRequest request) {
+		if (request.startedDate() != null && request.deadline() != null
+				&& request.deadline().isBefore(request.startedDate())) {
+			throw new InvalidRequestException("마감일은 모집 시작일보다 빠를 수 없습니다.");
+		}
 	}
 
 	private String normalizeSpaces(String value) {
