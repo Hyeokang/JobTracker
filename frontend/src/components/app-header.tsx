@@ -37,6 +37,7 @@ export function AppHeader({ user }: { user: AuthenticatedUser }) {
           <nav className="flex items-center gap-5 text-sm font-semibold text-slate-600" aria-label="주요 메뉴">
             <Link href="/dashboard" className="transition hover:text-blue-700">대시보드</Link>
             <Link href="/jobs" className="transition hover:text-blue-700">채용공고</Link>
+            <Link href="/applications" className="transition hover:text-blue-700">지원 현황</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">
