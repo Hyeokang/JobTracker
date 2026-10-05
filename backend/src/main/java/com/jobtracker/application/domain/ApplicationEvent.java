@@ -64,6 +64,10 @@ public class ApplicationEvent {
 		return id;
 	}
 
+	public Application getApplication() {
+		return application;
+	}
+
 	public ApplicationStatus getPreviousStatus() {
 		return previousStatus;
 	}

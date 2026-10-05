@@ -1,6 +1,7 @@
 package com.jobtracker.application.controller;
 
 import com.jobtracker.application.dto.ApplicationEventResponse;
+import com.jobtracker.application.dto.ApplicationActivityResponse;
 import com.jobtracker.application.dto.ApplicationResponse;
 import com.jobtracker.application.dto.ChangeApplicationStatusRequest;
 import com.jobtracker.application.dto.CreateApplicationRequest;
@@ -42,6 +43,11 @@ public class ApplicationController {
 	@GetMapping
 	public List<ApplicationResponse> findAll(Authentication authentication) {
 		return applicationService.findAll(authentication.getName());
+	}
+
+	@GetMapping("/events")
+	public List<ApplicationActivityResponse> findActivities(Authentication authentication) {
+		return applicationService.findActivities(authentication.getName());
 	}
 
 	@PatchMapping("/{applicationId}/status")

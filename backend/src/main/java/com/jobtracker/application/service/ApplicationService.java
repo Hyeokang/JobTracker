@@ -6,6 +6,7 @@ import com.jobtracker.application.domain.ApplicationEventRepository;
 import com.jobtracker.application.domain.ApplicationRepository;
 import com.jobtracker.application.domain.ApplicationStatus;
 import com.jobtracker.application.dto.ApplicationEventResponse;
+import com.jobtracker.application.dto.ApplicationActivityResponse;
 import com.jobtracker.application.dto.ApplicationResponse;
 import com.jobtracker.application.dto.ChangeApplicationStatusRequest;
 import com.jobtracker.application.dto.CreateApplicationRequest;
@@ -97,6 +98,14 @@ public class ApplicationService {
 
 		return applicationEventRepository.findAllByApplicationIdOrderByOccurredAtDesc(applicationId).stream()
 				.map(ApplicationEventResponse::from)
+				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<ApplicationActivityResponse> findActivities(String email) {
+		User user = findUser(email);
+		return applicationEventRepository.findAllByApplicationUserIdOrderByOccurredAtDesc(user.getId()).stream()
+				.map(ApplicationActivityResponse::from)
 				.toList();
 	}
 

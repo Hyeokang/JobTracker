@@ -34,8 +34,19 @@ export type ApplicationEvent = {
   occurredAt: string;
 };
 
+export type ApplicationActivity = ApplicationEvent & {
+  applicationId: string;
+  jobPostingId: string;
+  companyName: string;
+  jobTitle: string;
+};
+
 export function fetchApplications(signal?: AbortSignal) {
   return fetch("/api/applications", { credentials: "include", signal });
+}
+
+export function fetchApplicationActivities(signal?: AbortSignal) {
+  return fetch("/api/applications/events", { credentials: "include", signal });
 }
 
 export function createApplication(jobPostingId: string) {

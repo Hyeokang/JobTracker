@@ -142,6 +142,37 @@ class ApplicationControllerIntegrationTest {
 				.andExpect(status().isNotFound());
 	}
 
+	@Test
+	void listsOnlyAuthenticatedUsersActivities() throws Exception {
+		userRepository.save(new User("other@example.com", passwordEncoder.encode("password123!"), "다른 사용자"));
+		UUID myJobId = createJob("user@example.com", "내 활동 공고");
+		UUID otherJobId = createJob("other@example.com", "다른 활동 공고");
+		UUID myApplicationId = createApplication("user@example.com", myJobId, "PLANNED");
+		createApplication("other@example.com", otherJobId, "APPLIED");
+
+		mockMvc.perform(patch("/api/applications/{applicationId}/status", myApplicationId)
+					.with(user("user@example.com"))
+					.with(csrf())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("""
+							{
+							  "status": "DOCUMENT",
+							  "note": "서류 전형 시작"
+							}
+							"""))
+				.andExpect(status().isOk());
+
+		mockMvc.perform(get("/api/applications/events").with(user("user@example.com")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(2))
+				.andExpect(jsonPath("$[0].applicationId").value(myApplicationId.toString()))
+				.andExpect(jsonPath("$[0].companyName").value("JobTracker Labs"))
+				.andExpect(jsonPath("$[0].jobTitle").value("내 활동 공고"))
+				.andExpect(jsonPath("$[0].previousStatus").value("PLANNED"))
+				.andExpect(jsonPath("$[0].newStatus").value("DOCUMENT"))
+				.andExpect(jsonPath("$[0].note").value("서류 전형 시작"));
+	}
+
 	private UUID createJob(String email, String title) throws Exception {
 		String response = mockMvc.perform(post("/api/jobs")
 						.with(user(email))
