@@ -7,13 +7,16 @@ import com.jobtracker.company.domain.Company;
 import com.jobtracker.company.domain.CompanyRepository;
 import com.jobtracker.job.domain.JobPosting;
 import com.jobtracker.job.domain.JobPostingRepository;
+import com.jobtracker.job.domain.JobPostingSpecifications;
 import com.jobtracker.job.dto.CreateJobPostingRequest;
 import com.jobtracker.job.dto.JobPostingResponse;
+import com.jobtracker.job.dto.JobPostingSearchCriteria;
 import com.jobtracker.skill.domain.Skill;
 import com.jobtracker.skill.domain.SkillRepository;
 import com.jobtracker.user.domain.User;
 import com.jobtracker.user.domain.UserRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,9 +77,13 @@ public class JobPostingService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<JobPostingResponse> findAll(String email) {
+	public List<JobPostingResponse> findAll(String email, JobPostingSearchCriteria criteria) {
+		validateSearchDates(criteria);
 		User user = findUser(email);
-		return jobPostingRepository.findAllByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+		return jobPostingRepository.findAll(
+				JobPostingSpecifications.search(user.getId(), criteria),
+				Sort.by(Sort.Direction.DESC, "createdAt")
+		).stream()
 				.map(JobPostingResponse::from)
 				.toList();
 	}
@@ -146,6 +153,17 @@ public class JobPostingService {
 		if (request.startedDate() != null && request.deadline() != null
 				&& request.deadline().isBefore(request.startedDate())) {
 			throw new InvalidRequestException("마감일은 모집 시작일보다 빠를 수 없습니다.");
+		}
+	}
+
+	private void validateSearchDates(JobPostingSearchCriteria criteria) {
+		if (criteria.deadlineFrom() != null && criteria.deadlineTo() != null
+				&& criteria.deadlineTo().isBefore(criteria.deadlineFrom())) {
+			throw new InvalidRequestException("마감일 종료 범위는 시작 범위보다 빠를 수 없습니다.");
+		}
+		if (criteria.savedFrom() != null && criteria.savedTo() != null
+				&& criteria.savedTo().isBefore(criteria.savedFrom())) {
+			throw new InvalidRequestException("저장일 종료 범위는 시작 범위보다 빠를 수 없습니다.");
 		}
 	}
 

@@ -1,4 +1,5 @@
 import { apiUrl, csrfFetch } from "@/lib/api";
+import type { ApplicationStatus } from "@/lib/applications";
 import type { Skill } from "@/lib/skills";
 
 export const employmentTypeLabels = {
@@ -41,8 +42,29 @@ export type JobPosting = {
 
 export type JobPayload = Record<string, string | string[] | null>;
 
-export async function fetchJobs(signal?: AbortSignal) {
-  return fetch(`${apiUrl}/api/jobs`, {
+export type JobFilters = {
+  keyword?: string;
+  company?: string;
+  career?: string;
+  location?: string;
+  employmentType?: EmploymentType | "";
+  recruitmentType?: RecruitmentType | "";
+  skillId?: string;
+  applicationStatus?: ApplicationStatus | "";
+  deadlineFrom?: string;
+  deadlineTo?: string;
+  savedFrom?: string;
+  savedTo?: string;
+};
+
+export async function fetchJobs(signal?: AbortSignal, filters: JobFilters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value?.trim()) params.set(key, value.trim());
+  });
+  const query = params.size > 0 ? `?${params}` : "";
+
+  return fetch(`${apiUrl}/api/jobs${query}`, {
     credentials: "include",
     signal,
   });

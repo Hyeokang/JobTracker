@@ -1,5 +1,8 @@
 package com.jobtracker.job.controller;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jobtracker.application.domain.ApplicationEventRepository;
+import com.jobtracker.application.domain.ApplicationRepository;
 import com.jobtracker.company.domain.CompanyRepository;
 import com.jobtracker.job.domain.JobPostingRepository;
 import com.jobtracker.user.domain.User;
@@ -36,6 +39,12 @@ class JobPostingControllerIntegrationTest {
 	private UserRepository userRepository;
 
 	@Autowired
+	private ApplicationRepository applicationRepository;
+
+	@Autowired
+	private ApplicationEventRepository applicationEventRepository;
+
+	@Autowired
 	private JobPostingRepository jobPostingRepository;
 
 	@Autowired
@@ -51,6 +60,8 @@ class JobPostingControllerIntegrationTest {
 
 	@AfterEach
 	void cleanUp() {
+		applicationEventRepository.deleteAll();
+		applicationRepository.deleteAll();
 		jobPostingRepository.deleteAll();
 		companyRepository.deleteAll();
 		userRepository.deleteAll();
@@ -281,6 +292,67 @@ class JobPostingControllerIntegrationTest {
 				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
 	}
 
+	@Test
+	void searchesAndFiltersJobPostingsInDatabase() throws Exception {
+		UUID backendJobId = createSearchJob(
+				"JobTracker Labs",
+				"백엔드 개발자",
+				"Backend Engineer",
+				"신입 또는 경력 3년 이하",
+				"FULL_TIME",
+				"ROLLING",
+				"서울",
+				"2026-10-31",
+				"10000000-0000-0000-0000-000000000001"
+		);
+		createSearchJob(
+				"Frontend Studio",
+				"프론트엔드 개발자",
+				"Frontend Engineer",
+				"경력 3년 이상",
+				"CONTRACT",
+				"ALWAYS_OPEN",
+				"부산",
+				"2026-11-30",
+				"10000000-0000-0000-0000-000000000010"
+		);
+		createApplication("user@example.com", backendJobId, "APPLIED");
+
+		mockMvc.perform(get("/api/jobs")
+					.with(user("user@example.com"))
+					.param("keyword", "jobtracker")
+					.param("career", "신입")
+					.param("employmentType", "FULL_TIME")
+					.param("recruitmentType", "ROLLING")
+					.param("location", "서울")
+					.param("skillId", "10000000-0000-0000-0000-000000000001")
+					.param("applicationStatus", "APPLIED")
+					.param("deadlineFrom", "2026-10-01")
+					.param("deadlineTo", "2026-10-31"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].id").value(backendJobId.toString()))
+				.andExpect(jsonPath("$[0].companyName").value("JobTracker Labs"));
+
+		mockMvc.perform(get("/api/jobs")
+					.with(user("user@example.com"))
+					.param("company", "studio")
+					.param("recruitmentType", "ALWAYS_OPEN"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].title").value("프론트엔드 개발자"));
+	}
+
+	@Test
+	void rejectsReversedSearchDateRange() throws Exception {
+		mockMvc.perform(get("/api/jobs")
+					.with(user("user@example.com"))
+					.param("deadlineFrom", "2026-10-31")
+					.param("deadlineTo", "2026-10-01"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+	}
+
 	private UUID createJob(String email, String title, String url) throws Exception {
 		mockMvc.perform(post("/api/jobs")
 					.with(user(email))
@@ -300,5 +372,65 @@ class JobPostingControllerIntegrationTest {
 				.findFirst()
 				.orElseThrow()
 				.getId();
+	}
+
+	private UUID createSearchJob(
+			String companyName,
+			String title,
+			String position,
+			String career,
+			String employmentType,
+			String recruitmentType,
+			String location,
+			String deadline,
+			String skillId
+	) throws Exception {
+		String response = mockMvc.perform(post("/api/jobs")
+					.with(user("user@example.com"))
+					.with(csrf())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("""
+							{
+							  "companyName": "%s",
+							  "title": "%s",
+							  "position": "%s",
+							  "careerRequirement": "%s",
+							  "employmentType": "%s",
+							  "recruitmentType": "%s",
+							  "location": "%s",
+							  "deadline": "%s",
+							  "skillIds": ["%s"]
+							}
+							""".formatted(
+							companyName,
+							title,
+							position,
+							career,
+							employmentType,
+							recruitmentType,
+							location,
+							deadline,
+							skillId
+					)))
+				.andExpect(status().isCreated())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		return UUID.fromString(JsonPath.read(response, "$.id"));
+	}
+
+	private void createApplication(String email, UUID jobPostingId, String applicationStatus) throws Exception {
+		mockMvc.perform(post("/api/applications")
+					.with(user(email))
+					.with(csrf())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("""
+							{
+							  "jobPostingId": "%s",
+							  "status": "%s"
+							}
+							""".formatted(jobPostingId, applicationStatus)))
+				.andExpect(status().isCreated());
 	}
 }
