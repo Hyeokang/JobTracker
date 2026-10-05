@@ -38,6 +38,7 @@ export function AppHeader({ user }: { user: AuthenticatedUser }) {
             <Link href="/dashboard" className="transition hover:text-blue-700">대시보드</Link>
             <Link href="/jobs" className="transition hover:text-blue-700">채용공고</Link>
             <Link href="/applications" className="transition hover:text-blue-700">지원 현황</Link>
+            <Link href="/calendar" className="transition hover:text-blue-700">일정</Link>
           </nav>
         </div>
         <div className="flex items-center gap-4">
