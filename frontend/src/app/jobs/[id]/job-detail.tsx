@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { ApplicationPanel } from "@/components/application-panel";
 import { PageLoadError, PageLoading } from "@/components/auth-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useJob } from "@/hooks/use-job";
@@ -118,6 +119,8 @@ export function JobDetail({ jobPostingId }: { jobPostingId: string }) {
             </a>
           )}
         </section>
+
+        <ApplicationPanel jobPostingId={job.id} />
       </div>
     </main>
   );

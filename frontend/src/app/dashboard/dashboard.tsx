@@ -5,22 +5,25 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { PageLoadError, PageLoading } from "@/components/auth-state";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { fetchApplications, type Application } from "@/lib/applications";
 import { employmentTypeLabels, fetchJobs, recruitmentTypeLabels, type JobPosting } from "@/lib/jobs";
 
 export function Dashboard() {
   const { user, isLoading: isUserLoading, hasError: hasUserError } = useCurrentUser();
   const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [isJobsLoading, setIsJobsLoading] = useState(true);
   const [hasJobsError, setHasJobsError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetchJobs(controller.signal)
-      .then(async (response) => {
-        if (response.status === 401) return;
-        if (!response.ok) throw new Error("Failed to load jobs");
-        setJobs((await response.json()) as JobPosting[]);
+    Promise.all([fetchJobs(controller.signal), fetchApplications(controller.signal)])
+      .then(async ([jobsResponse, applicationsResponse]) => {
+        if (jobsResponse.status === 401 || applicationsResponse.status === 401) return;
+        if (!jobsResponse.ok || !applicationsResponse.ok) throw new Error("Failed to load dashboard");
+        setJobs((await jobsResponse.json()) as JobPosting[]);
+        setApplications((await applicationsResponse.json()) as Application[]);
       })
       .catch((error) => {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
@@ -37,7 +40,7 @@ export function Dashboard() {
 
   const summaryCards = [
     { label: "저장한 공고", value: jobs.length, color: "bg-slate-950 text-white" },
-    { label: "진행 중 지원", value: 0, color: "bg-blue-600 text-white" },
+    { label: "진행 중 지원", value: applications.filter((application) => !["ACCEPTED", "REJECTED", "WITHDRAWN"].includes(application.status)).length, color: "bg-blue-600 text-white" },
     { label: "예정된 일정", value: 0, color: "bg-white text-slate-950" },
   ];
 
